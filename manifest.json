@@ -1,0 +1,67 @@
+{
+  "id": "lighttigerxiv/extensions-example",
+  "name": "Extensions Example",
+  "version_name": "1.0.0",
+  "version_code": 1,
+  "description": "A extension with all possible options. It serves as documentation too",
+  "os": ["*"],
+  "keyword": "ee",
+  "settings": [
+    {
+      "id": "favourite_pokemon",
+      "title": "Favourite Pokemon",
+      "description": "Just a setting to say your favorite pokemon",
+      "setting_type": "text",
+      "default_value": "Sprigatito",
+      "os": ["*"]
+    },
+    {
+      "id": "best_gen1_pokemon",
+      "title": "Best Gen 1 Pokemon",
+      "description": "Select the best generation 1 starter",
+      "setting_type": "select",
+      "default_value": "bulbasaur",
+      "os": ["*"],
+      "select_options": [
+        {
+          "id": "bulbasaur",
+          "text": "Bulbasaur"
+        },
+        {
+          "id": "charmander",
+          "text": "Charmander"
+        },
+        {
+          "id": "squirtle",
+          "text": "Squirtle"
+        },
+        {
+          "id": "other",
+          "text": "Other"
+        }
+      ]
+    },
+    {
+      "id": "custom_best_gen1_starter",
+      "title": "Custom Favourite Gen 1 Pokemon",
+      "description": "Type the custom best generation 1 starter",
+      "setting_type": "text",
+      "default_value": "",
+      "os": ["*"],
+      "show_conditions": [
+        {
+          "setting_id": "best_gen1_pokemon",
+          "setting_value": "other"
+        }
+      ]
+    },
+    {
+      "id": "pokemon_master",
+      "title": "Pokemon Master",
+      "description": "Toggle this if you are pokemon master",
+      "setting_type": "toggle",
+      "default_value": "false",
+      "os": ["*"]
+    }
+  ]
+}
