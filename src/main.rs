@@ -1,16 +1,13 @@
 use assets::get_image;
+use dirs::home_dir;
 use whiskers_launcher_rs::{
-    actions::{self, Action},
-    api::{
-        self,
-        extensions::{
-            get_extension_context, get_extension_dialog_result, get_extension_setting,
-            send_extension_results,
-        },
+    action::{
+        Action, CopyAction, DialogAction, ExtensionAction, Field, FileFilter, FilePickerField,
+        InputField, OpenURLAction, SelectField, SelectOption, TextAreaField, ToggleField,
     },
-    dialog::{self, DialogField, SelectField},
-    others::send_notification,
-    results::{self, WhiskersResult},
+    api::extensions::{get_extension_request, get_extension_setting, send_response},
+    result::{TextResult, TitleAndDescriptionResult, WLResult},
+    utils::send_notification,
 };
 
 pub mod assets;
@@ -18,247 +15,193 @@ pub mod assets;
 const EXTENSION_ID: &str = "lighttigerxiv/extensions-example";
 
 fn main() {
-    let context = get_extension_context().unwrap();
-    let favourite_pokemon: String =
-        get_extension_setting(EXTENSION_ID, "favourite_pokemon").unwrap();
+    let request = get_extension_request();
 
-    match context.action {
-        api::extensions::Action::GetResults => {
-            let mut results: Vec<WhiskersResult> = vec![];
+    let starter = get_extension_setting(EXTENSION_ID, "starter").unwrap();
+    let other_starter = get_extension_setting(EXTENSION_ID, "other-pokemon").unwrap();
+    let description = get_extension_setting(EXTENSION_ID, "description").unwrap();
+    let nickname = get_extension_setting(EXTENSION_ID, "nickname").unwrap();
+    let pokemon_name = if starter == "other" {
+        other_starter.to_owned()
+    } else {
+        starter.to_owned()
+    };
 
-            // =============================================================
-            // Text Results
-            // =============================================================
+    match request.action_context {
+        whiskers_launcher_rs::api::extensions::ActionContext::ResultsRequest => {
+            let mut results = Vec::<WLResult>::new();
 
-            results.push(WhiskersResult::Text(results::Text::new(
+            results.push(WLResult::new_text(TextResult::new(
                 "Text Result",
-                actions::Action::Nothing,
+                Action::new_ignore(),
             )));
 
-            results.push(WhiskersResult::Text(
-                results::Text::new("Text Result With A Icon", actions::Action::Nothing)
-                    .icon(get_image("sprigatito.png")),
+            results.push(WLResult::new_text(
+                TextResult::new("Full Text Result", Action::new_ignore())
+                    .icon(get_image("pokeball.svg"))
+                    .tint("accent"),
             ));
 
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    "Text Result With A Tinted Accent Icon",
-                    actions::Action::Nothing,
+            results.push(WLResult::new_title_and_description(
+                TitleAndDescriptionResult::new(
+                    "Text And Description Result",
+                    "Just a small description",
+                    Action::new_ignore(),
+                ),
+            ));
+
+            results.push(WLResult::new_title_and_description(
+                TitleAndDescriptionResult::new(
+                    "Full Text And Description Result",
+                    "Just a small description",
+                    Action::new_ignore(),
                 )
                 .icon(get_image("pokeball.svg"))
-                .tint_icon(true),
+                .tint("accent"),
             ));
 
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    "Text Result With A Custom Tinted Icon",
-                    actions::Action::Nothing,
+            results.push(WLResult::new_divider());
+
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    format!("Your starter is {}", &pokemon_name),
+                    Action::new_ignore(),
                 )
                 .icon(get_image("pokeball.svg"))
-                .tint_icon(true)
-                .tint_color("#FF0000"),
+                .tint("accent"),
             ));
 
-            results.push(WhiskersResult::Divider);
-
-            // =============================================================
-            // Title And Text Results
-            // =============================================================
-
-            results.push(WhiskersResult::TitleAndText(results::TitleAndText::new(
-                "Title",
-                "Text",
-                actions::Action::Nothing,
-            )));
-
-            results.push(WhiskersResult::TitleAndText(
-                results::TitleAndText::new(
-                    "Title And Text With Icon",
-                    "Text",
-                    actions::Action::Nothing,
-                )
-                .icon(get_image("sprigatito.png")),
-            ));
-
-            results.push(WhiskersResult::TitleAndText(
-                results::TitleAndText::new(
-                    "Title And Text With Tinted Accent Icon",
-                    "Text",
-                    actions::Action::Nothing,
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    format!("Your starter nickname is {}", &nickname),
+                    Action::new_ignore(),
                 )
                 .icon(get_image("pokeball.svg"))
-                .tint_icon(true),
+                .tint("accent"),
             ));
 
-            results.push(WhiskersResult::TitleAndText(
-                results::TitleAndText::new(
-                    "Title And Text With A Custom Tinted Icon",
-                    "Text",
-                    actions::Action::Nothing,
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    format!("Your pokemon description is {}", &description),
+                    Action::new_ignore(),
                 )
                 .icon(get_image("pokeball.svg"))
-                .tint_icon(true)
-                .tint_color("#00FF00"),
+                .tint("accent"),
             ));
 
-            results.push(WhiskersResult::Divider);
+            results.push(WLResult::new_divider());
 
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                "Open favourite pokemon in serebii",
-                actions::Action::OpenUrl(
-                    actions::OpenUrl::new(
-                    format!("https://www.serebii.net/search.shtml?cx=018410473690156091934%3A6gahkiyodbi&cof=FORID%3A11&q={}&sa=Search",
-                            favourite_pokemon.to_owned())
-                    )
-                ))
-                    .icon(get_image("celebi.png"))));
-
-            results.push(WhiskersResult::Divider);
-
-            // =============================================================
-            // Dialog Exmple
-            // =============================================================
-
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    format!("Copy Favourite Pokemon ({})", favourite_pokemon.to_owned()),
-                    actions::Action::CopyToClipboard(actions::CopyToClipboard::new(
-                        favourite_pokemon.to_owned(),
-                    )),
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    "Copy starter name",
+                    Action::new_copy(CopyAction::new(&starter)),
                 )
                 .icon(get_image("copy.svg"))
-                .tint_icon(true),
+                .tint("accent"),
             ));
 
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    "Custom Extension Action",
-                    actions::Action::Extension(actions::Extension::new(
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    "Search for starter in serebii",
+                    Action::new_open_url(OpenURLAction::new(format!(
+                        "https://www.serebii.net/search.shtml?q={}&sa=Search",
+                        &starter
+                    ))),
+                )
+                .icon(get_image("celebi.png")),
+            ));
+
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    "Notify starter name",
+                    Action::new_extension(ExtensionAction::new(EXTENSION_ID, "notify-starter")),
+                )
+                .icon(get_image("pokeball.svg"))
+                .tint("accent"),
+            ));
+
+            results.push(WLResult::new_divider());
+
+            let mut fields = Vec::<Field>::new();
+
+            fields.push(Field::new_input(
+                "input",
+                InputField::new("", "Input Field", "This is a input field")
+                    .placeholder("This is a placeholder"),
+            ));
+
+            fields.push(Field::new_text_area(
+                "text-area",
+                TextAreaField::new("", "Text Area Field", "This is a text area field")
+                    .placeholder("This is a placeholder"),
+            ));
+
+            fields.push(Field::new_toggle(
+                "toggle",
+                ToggleField::new(true, "Toggle Field", "This is a toggle field"),
+            ));
+
+            fields.push(Field::new_select(
+                "select",
+                SelectField::new(
+                    "1",
+                    "Select Field",
+                    "This is a select field",
+                    vec![
+                        SelectOption::new("1", "Option 1"),
+                        SelectOption::new("2", "Option 2"),
+                        SelectOption::new("3", "Option 3"),
+                    ],
+                ),
+            ));
+
+            fields.push(Field::new_file_picker(
+                "file-picker",
+                FilePickerField::new("File Picker", "Pick a image file").filters(vec![
+                    FileFilter::new(
+                        "Image",
+                        vec![
+                            "png".to_string(),
+                            "jpg".to_string(),
+                            "jpeg".to_string(),
+                            "webp".to_string(),
+                        ],
+                    ),
+                ]),
+            ));
+
+            fields.push(Field::new_file_picker(
+                "dir-picker",
+                FilePickerField::new("Directory Picker", "Pick a directory")
+                    .pick_directory(true)
+                    .default_path(home_dir().unwrap().into_os_string().into_string().unwrap()),
+            ));
+
+            results.push(WLResult::new_text(
+                TextResult::new(
+                    "Open Dialog",
+                    Action::new_dialog(DialogAction::new(
                         EXTENSION_ID,
-                        "notify_favourite",
+                        "show-dialog-results",
+                        "Dialog Example",
+                        "Finish",
+                        fields,
                     )),
                 )
-                .icon(get_image("puzzle.svg"))
-                .tint_icon(true),
-            ));
-
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    "Custom Extension Action With Arguments",
-                    actions::Action::Extension(
-                        actions::Extension::new(EXTENSION_ID, "notify_custom").args(vec![
-                            "Mewtwo".to_string(),
-                            "Lugia".to_string(),
-                            "Miraidon".to_string(),
-                        ]),
-                    ),
-                )
-                .icon(get_image("puzzle.svg"))
-                .tint_icon(true),
-            ));
-
-            let mut dialog_fields: Vec<DialogField> = vec![];
-
-            dialog_fields.push(DialogField::Input(
-                dialog::Input::new("best_pokemon", "Best Pokemon", "")
-                    .placeholder("Best pokemon")
-                    .description("Type the best pokemon in your opinion"),
-            ));
-
-            dialog_fields.push(DialogField::TextArea(
-                dialog::TextArea::new("describe_favourite", "Describe Favourite Pokemon", "")
-                    .description("Describe your favourite pokemon")
-                    .placeholder("Favourite Mon :P"),
-            ));
-
-            dialog_fields.push(DialogField::Toggle(
-                dialog::Toggle::new("pokemon_master", "Are you a pokemon master?", true)
-                    .description("Toggle if you are pokemon master :D"),
-            ));
-
-            dialog_fields.push(DialogField::SelectFile(
-                dialog::SelectFile::new("select_file_example", "Select File")
-                    .description("Select a random picture")
-                    .filters(vec![dialog::FileFilter::new("Image Files")
-                        .add_extension("png")
-                        .add_extension("jpg")
-                        .add_extension("jepg")
-                        .add_extension("svg")]),
-            ));
-
-            dialog_fields.push(DialogField::SelectFile(
-                dialog::SelectFile::new("select_dialog_example", "Select Directory")
-                    .description("Select a random directory")
-                    .select_dir(true),
-            ));
-
-            let mut starters: Vec<SelectField> = vec![];
-            starters.push(SelectField::new("litten", "Litten"));
-            starters.push(SelectField::new("rowlet", "Rowlet"));
-            starters.push(SelectField::new("popplio", "Popplio"));
-
-            dialog_fields.push(DialogField::Select(
-                dialog::Select::new(
-                    "best_gen7_starter",
-                    "Best gen 7 starter",
-                    "litten",
-                    starters,
-                )
-                .description("Type the best pokemon in your opinion"),
-            ));
-
-            results.push(WhiskersResult::Text(
-                results::Text::new(
-                    "Open extension dialog",
-                    Action::Dialog(
-                        actions::Dialog::new(
-                            EXTENSION_ID,
-                            "Random Fields About Pokemon",
-                            "show_dialog_results",
-                            dialog_fields,
-                        )
-                        .primary_button_text("Custom Button Text"),
-                    ),
-                )
                 .icon(get_image("open.svg"))
-                .tint_icon(true),
+                .tint("accent"),
             ));
 
-            send_extension_results(results);
+            send_response(results);
         }
-        api::extensions::Action::RunAction => {
-            let action = context.extension_action.unwrap();
-            let args = context.custom_args;
-            let best_gen_one_starter =
-                get_extension_setting(EXTENSION_ID, "best_gen1_pokemon").unwrap();
+        whiskers_launcher_rs::api::extensions::ActionContext::RunAction => {
+            let action = request.extension_action.unwrap();
 
-            if action == "notify_favourite" {
-                send_notification(
-                    "Favourite Pokemon",
-                    format!("Your favourite pokemon is {}", favourite_pokemon.to_owned()),
-                )
-            }
-
-            if action == "notify_custom" {
-                send_notification(
-                    "Custom Args",
-                    format!("The best gen 1 starter is {}. And some custom lengendary pokemons are: {} - {} - {}", best_gen_one_starter, args[0], args[1], args[2]),
-                );
-            }
-
-            if action == "show_dialog_results" {
-                //let results = get_extension_dialog_results().unwrap();
-                println!(
-                    "Is pokemon master: {:?}",
-                    get_extension_dialog_result("pokemon_master")
-                        .unwrap()
-                        .as_boolean()
-                );
-                println!(
-                    "Best Pokemon: {:?}",
-                    get_extension_dialog_result("best_pokemon").unwrap().value
-                );
+            match action.as_str() {
+                "notify-starter" => {
+                    send_notification("Your Starter", &pokemon_name);
+                }
+                _ => {}
             }
         }
     }
