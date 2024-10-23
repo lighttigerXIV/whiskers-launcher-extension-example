@@ -5,56 +5,56 @@
   "keyword": "ee",
   "settings": [
     {
-      "id": "starter",
-      "title": "Your Starter Pokemon",
-      "description": "Select the best generation 1 starter",
+      "id": "select",
+      "title": "Select",
+      "description": "Select something. Select 4 to show another complementing setting.",
       "setting_type": "Select",
-      "default_value": "bulbasaur",
+      "default_value": "one",
       "select_options": [
         {
-          "id": "bulbasaur",
-          "value": "Bulbasaur"
+          "id": "one",
+          "text": "1"
         },
         {
-          "id": "charmander",
-          "value": "Charmander"
+          "id": "two",
+          "text": "2"
         },
         {
-          "id": "squirtle",
-          "value": "Squirtle"
+          "id": "three",
+          "text": "3"
         },
         {
-          "id": "other",
-          "value": "Other"
+          "id": "four",
+          "text": "4"
         }
       ]
     },
     {
-      "id": "other-pokemon",
-      "title": "Other Starter Pokemon",
-      "description": "Type the pokemon name",
+      "id": "hidden-input",
+      "title": "Hidden Input",
+      "description": "Just a hidden input component.",
       "setting_type": "Input",
       "default_value": "",
       "show_conditions": [
         {
-          "setting_id": "starter",
-          "setting_value": "other"
+          "setting_id": "select",
+          "setting_value": "four"
         }
       ]
     },
     {
-      "id": "description",
-      "title": "Description",
-      "description": "Describe your pokemon",
+      "id": "text-area",
+      "title": "Text Area",
+      "description": "A text area component.",
       "setting_type": "TextArea",
       "default_value": ""
     },
     {
-      "id": "nickname",
-      "title": "Pokemon Nickame",
-      "description": "A setting to say your pokemon nickname",
+      "id": "input",
+      "title": "Input",
+      "description": "Just a input component.",
       "setting_type": "Input",
-      "default_value": "Poki"
+      "default_value": ""
     }
   ]
 }

@@ -5,6 +5,4 @@ edition = "2021"
 
 [dependencies]
 dirs = "5.0.1"
-#whiskers-launcher-rs = { path = "/home/lighttigerxiv/Coding/Rust/Projects/whiskers-launcher-rs" }
-#whiskers-launcher-rs = {path = "/home/lighttigerxiv/Projects/Cli/whiskers-launcher-rs" }
-whiskers-launcher-rs = {path = "C:\\Users\\lighttigerXIV\\Projects\\WhiskersApps\\whiskers-launcher-rs"}
+whiskers-launcher-core = "0.3.1"
